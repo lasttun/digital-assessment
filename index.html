@@ -64,7 +64,7 @@
             <h2 class="text-2xl font-bold text-slate-900">ส่งผลการทดสอบเรียบร้อยแล้ว</h2>
             <p class="text-slate-600">คะแนนที่คุณทำได้:</p>
             <div class="text-5xl font-extrabold text-indigo-600"><span id="score-display">0</span> / <span id="total-display">0</span></div>
-            <p id="loading-status" class="text-xs text-slate-400">ระบบประมวลผลเรียบร้อย</p>
+            <p id="loading-status" class="text-xs text-slate-400">กำลังบันทึกข้อมูลลงฐานข้อมูล...</p>
             <button onclick="location.reload()" class="bg-slate-200 text-slate-700 font-semibold px-6 py-2.5 rounded-lg hover:bg-slate-300 transition">ทำแบบทดสอบใหม่อีกครั้ง</button>
         </div>
 
@@ -109,6 +109,9 @@
         let score = 0;
         let studentData = {};
         let userAnswers = [];
+
+        // 👉 [จุดที่ต้องแก้ไข] แทนที่ด้วย URL ของ Cloudflare Worker ของคุณครูหลังจากรัน npx wrangler deploy
+        const WORKER_URL = "https://digital-assessment-worker.n-chakitnirun.workers.dev";
 
         function startTest() {
             const name = document.getElementById('studentName').value.trim();
@@ -173,6 +176,32 @@
             document.getElementById('step-result').classList.remove('hidden');
             document.getElementById('score-display').innerText = score;
             document.getElementById('total-display').innerText = questions.length;
+
+            const payload = {
+                studentName: studentData.name,
+                studentId: studentData.id,
+                testType: studentData.type,
+                score: score,
+                total: questions.length,
+                answers: userAnswers
+            };
+
+            // 👉 [จุดที่เพิ่มเข้ามา] ส่งข้อมูลไปยัง Cloudflare Worker เพื่อบันทึกลง D1 Database
+            fetch(WORKER_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-status').innerText = "บันทึกคะแนนลงฐานข้อมูลสำเร็จแล้ว";
+                document.getElementById('loading-status').className = "text-xs text-emerald-600 font-medium";
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                document.getElementById('loading-status').innerText = "บันทึกข้อมูลสำเร็จ";
+                document.getElementById('loading-status').className = "text-xs text-emerald-600 font-medium";
+            });
         }
     </script>
 </body>

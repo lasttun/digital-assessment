@@ -1,0 +1,8 @@
+name = "digital-assessment-worker"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "assessment-db"
+database_id = "a121c9b0-e61b-49a7-8ec3-143607348a6f"
